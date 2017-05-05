@@ -8,7 +8,7 @@
 
 const ServiceProvider = require('adonis-fold').ServiceProvider
 
-class MorphsProvider extends ServiceProvider {
+class PolymorphicProvider extends ServiceProvider {
   * register () {
     this.app.bind('Adonis/Lucid/MorphTrait', function () {
       return require('../src/Traits/MorphTrait')
@@ -16,4 +16,4 @@ class MorphsProvider extends ServiceProvider {
   }
 }
 
-module.exports = MorphsProvider
+module.exports = PolymorphicProvider
