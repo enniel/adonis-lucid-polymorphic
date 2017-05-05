@@ -1,3 +1,3 @@
-# Adonis Lucid Morphs
+# The Adonis Lucid Polymorphic Relations Support.
 
 ## Coming soon...

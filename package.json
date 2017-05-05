@@ -1,7 +1,7 @@
 {
-  "name": "adonis-lucid-morphs",
+  "name": "adonis-lucid-polymorphic",
   "version": "0.0.1",
-  "description": "The Adonis Lucid morphs.",
+  "description": "The Adonis Lucid Polymorphic Relations Support.",
   "main": "index.js",
   "scripts": {
     "fix": "standard --fix",
@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/enniel/adonis-lucid-morphs.git"
+    "url": "git+https://github.com/enniel/adonis-lucid-polymorphic.git"
   },
   "keywords": [
     "adonis",
@@ -24,7 +24,7 @@
     "adonis-lucid"
   ],
   "bugs": {
-    "url": "https://github.com/enniel/adonis-lucid-morphs/issues"
+    "url": "https://github.com/enniel/adonis-lucid-polymorphic/issues"
   },
-  "homepage": "https://github.com/enniel/adonis-lucid-morphs#readme"
+  "homepage": "https://github.com/enniel/adonis-lucid-polymorphic#readme"
 }

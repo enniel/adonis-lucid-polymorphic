@@ -1,7 +1,7 @@
 'use strict'
 
 /**
- * adonis-lucid-morphs
+ * adonis-lucid-polymorphic
  * Copyright(c) 2017 Evgeny Razumov
  * MIT Licensed
  */
