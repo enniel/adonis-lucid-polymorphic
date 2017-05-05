@@ -1,0 +1,30 @@
+{
+  "name": "adonis-lucid-morphs",
+  "version": "0.0.1",
+  "description": "The Adonis Lucid morphs.",
+  "main": "index.js",
+  "scripts": {
+    "fix": "standard --fix",
+    "lint": "standard"
+  },
+  "author": "Evgeny Razumov (enniel)",
+  "license": "MIT",
+  "dependencies": {
+    "adonis-fold": "^3.0.3",
+    "adonis-lucid": "^3.0.16",
+    "cat-log": "^1.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/enniel/adonis-lucid-morphs.git"
+  },
+  "keywords": [
+    "adonis",
+    "lucid",
+    "adonis-lucid"
+  ],
+  "bugs": {
+    "url": "https://github.com/enniel/adonis-lucid-morphs/issues"
+  },
+  "homepage": "https://github.com/enniel/adonis-lucid-morphs#readme"
+}
