@@ -3,7 +3,11 @@
   "version": "0.0.1",
   "description": "The Adonis Lucid Polymorphic Relations Support.",
   "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
   "scripts": {
+    "test": "mocha test/acceptance",
     "fix": "standard --fix",
     "lint": "standard"
   },
@@ -12,7 +16,9 @@
   "dependencies": {
     "adonis-fold": "^3.0.3",
     "adonis-lucid": "^3.0.16",
-    "cat-log": "^1.0.2"
+    "cat-log": "^1.0.2",
+    "harmony-reflect": "^1.5.1",
+    "lodash": "^4.17.4"
   },
   "repository": {
     "type": "git",
@@ -26,5 +32,18 @@
   "bugs": {
     "url": "https://github.com/enniel/adonis-lucid-polymorphic/issues"
   },
-  "homepage": "https://github.com/enniel/adonis-lucid-polymorphic#readme"
+  "homepage": "https://github.com/enniel/adonis-lucid-polymorphic#readme",
+  "devDependencies": {
+    "adonis-ace": "^3.0.7",
+    "bluebird": "^3.5.0",
+    "chai": "^3.5.0",
+    "co-fs-extra": "^1.2.1",
+    "co-mocha": "^1.2.0",
+    "dirty-chai": "^1.2.2",
+    "dotenv": "^4.0.0",
+    "mocha": "^3.3.0",
+    "moment": "^2.18.1",
+    "pg": "^6.1.5",
+    "sqlite3": "^3.1.8"
+  }
 }

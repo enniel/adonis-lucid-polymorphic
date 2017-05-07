@@ -12,7 +12,7 @@ const CE = require('adonis-lucid/src/Exceptions')
 const CatLog = require('cat-log')
 const logger = new CatLog('adonis:lucid')
 
-class MorphMany extends Relation {
+class MorphOne extends Relation {
   constructor (parent, related, determiner, primaryKey) {
     super(parent, related)
     this.fromKey = primaryKey || this.parent.constructor.primaryKey
@@ -22,6 +22,41 @@ class MorphMany extends Relation {
     if (!this.typeValue) {
       throw new CE.ModelRelationException(`For using morph many relation add ${parent.constructor.name} model to morph map.`)
     }
+  }
+
+  /**
+   * empty placeholder to be used when unable to eagerload
+   * relations.
+   *
+   * @method eagerLoadFallbackValue
+   *
+   * @return {Null}
+   */
+  get eagerLoadFallbackValue () {
+    return null
+  }
+
+  /**
+   * returns result of this.first
+   *
+   * @see this.first()
+   * @return {Object}
+   *
+   * @public
+   */
+  fetch () {
+    return this.first()
+  }
+
+  /**
+   * morphOne cannot have paginate
+   *
+   * @public
+   *
+   * @throws CE.ModelRelationException
+   */
+  paginate () {
+    throw CE.ModelRelationException.unSupportedMethod('paginate', this.constructor.name)
   }
 
   /**
@@ -43,12 +78,9 @@ class MorphMany extends Relation {
       .where(this.typeKey, this.typeValue)
       .whereIn(this.toKey, values)
       .fetch()
-    return results.groupBy((item) => {
+    return results.keyBy((item) => {
       return item[this.toKey]
-    }).mapValues(function (value) {
-      return helpers.toCollection(value)
-    })
-    .value()
+    }).value()
   }
 
   /**
@@ -70,35 +102,35 @@ class MorphMany extends Relation {
     const results = yield this.relatedQuery
       .where(this.typeKey, this.typeValue)
       .where(this.toKey, value)
-      .fetch()
+      .first()
     const response = {}
     response[value] = results
     return response
   }
 
   /**
-   * saves a related model in reference to the parent model
-   * and sets up foriegn key automatically.
-   *
-   * @param  {Object} relatedInstance
-   * @return {Number}
+   * morphOne cannot have createMany, since it
+   * maps one to one relationship
    *
    * @public
+   *
+   * @throws CE.ModelRelationException
    */
-  * save (relatedInstance) {
-    if (relatedInstance instanceof this.related === false) {
-      throw CE.ModelRelationException.relationMisMatch('save accepts an instance of related model')
-    }
-    if (this.parent.isNew()) {
-      throw CE.ModelRelationException.unSavedTarget('save', this.parent.constructor.name, this.related.name)
-    }
-    if (!this.parent[this.fromKey]) {
-      logger.warn(`Trying to save relationship with ${this.fromKey} as primaryKey, whose value is falsy`)
-    }
-    relatedInstance[this.toKey] = this.parent[this.fromKey]
-    relatedInstance[this.typeKey] = this.typeValue
-    return yield relatedInstance.save()
+  * createMany () {
+    throw CE.ModelRelationException.unSupportedMethod('createMany', this.constructor.name)
+  }
+
+  /**
+   * morphOne cannot have saveMany, since it
+   * maps one to one relationship
+   *
+   * @public
+   *
+   * @throws CE.ModelRelationException
+   */
+  * saveMany () {
+    throw CE.ModelRelationException.unSupportedMethod('saveMany', this.constructor.name)
   }
 }
 
-module.exports = MorphMany
+module.exports = MorphOne

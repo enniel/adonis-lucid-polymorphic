@@ -12,16 +12,13 @@ const CE = require('adonis-lucid/src/Exceptions')
 const CatLog = require('cat-log')
 const logger = new CatLog('adonis:lucid')
 
-class MorphMany extends Relation {
-  constructor (parent, related, determiner, primaryKey) {
-    super(parent, related)
+class MorphTo extends Relation {
+  constructor (parent, determiner, primaryKey) {
+    // monkey patch
+    super(parent)
     this.fromKey = primaryKey || this.parent.constructor.primaryKey
     this.toKey = determiner ? `${determiner}_id` : 'parent_id'
     this.typeKey = determiner ? `${determiner}_type` : 'parent_type'
-    this.typeValue = Relation.morphKey(parent)
-    if (!this.typeValue) {
-      throw new CE.ModelRelationException(`For using morph many relation add ${parent.constructor.name} model to morph map.`)
-    }
   }
 
   /**
@@ -101,4 +98,4 @@ class MorphMany extends Relation {
   }
 }
 
-module.exports = MorphMany
+module.exports = MorphTo
