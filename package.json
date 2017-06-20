@@ -1,0 +1,73 @@
+{
+  "name": "adonis-lucid-polymorphic",
+  "version": "0.0.1",
+  "description": "The Adonis Lucid Polymorphic Relations Support.",
+  "main": "src/Relations",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "npm run test:pg && npm run test:mysql && npm run test:sqlite3",
+    "test:pg": "DB=pg _mocha test/unit",
+    "test:mysql": "DB=mysql _mocha test/unit",
+    "test:sqlite3": "DB=sqlite3 _mocha test/unit",
+    "lint": "standard",
+    "lint:fix": "standard --fix",
+    "precommit": "npm run test && lint-staged",
+    "prepush": "npm run test && lint-staged"
+  },
+  "lint-staged": {
+    "*.js": [
+      "npm run lint:fix",
+      "git add"
+    ]
+  },
+  "author": "Evgeny Razumov (enniel)",
+  "license": "MIT",
+  "dependencies": {
+    "cat-log": "^1.0.2",
+    "lodash": "^4.17.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/enniel/adonis-lucid-polymorphic.git"
+  },
+  "keywords": [
+    "adonis",
+    "lucid",
+    "adonis-lucid",
+    "polymorphic",
+    "relations"
+  ],
+  "bugs": {
+    "url": "https://github.com/enniel/adonis-lucid-polymorphic/issues"
+  },
+  "homepage": "https://github.com/enniel/adonis-lucid-polymorphic#readme",
+  "devDependencies": {
+    "adonis-fold": "^3.0.3",
+    "adonis-lucid": "^3.0.16",
+    "bluebird": "^3.5.0",
+    "chai": "^3.5.0",
+    "co-fs-extra": "^1.2.1",
+    "co-mocha": "^1.2.0",
+    "dirty-chai": "^1.2.2",
+    "dotenv": "^4.0.0",
+    "husky": "^0.13.4",
+    "lint-staged": "^3.6.1",
+    "mocha": "^3.3.0",
+    "mysql": "^2.13.0",
+    "pg": "^6.1.5",
+    "semver": "^5.3.0",
+    "sqlite3": "^3.1.8",
+    "standard": "^10.0.2"
+  },
+  "standard": {
+    "global": [
+      "describe",
+      "it",
+      "after",
+      "before",
+      "context"
+    ]
+  }
+}
