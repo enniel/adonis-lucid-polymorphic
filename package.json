@@ -7,14 +7,15 @@
     "test": "test"
   },
   "scripts": {
-    "test": "npm run test:pg && npm run test:mysql && npm run test:sqlite3",
-    "test:pg": "DB=pg _mocha test/unit",
-    "test:mysql": "DB=mysql _mocha test/unit",
-    "test:sqlite3": "DB=sqlite3 _mocha test/unit",
+    "test": "npm run lint && node ./bin/test.js",
+    "test:all": "npm run test:pg && npm run test:mysql && npm run test:sqlite3",
+    "test:pg": "DB=pg npm run test",
+    "test:mysql": "DB=mysql npm run test",
+    "test:sqlite3": "DB=sqlite3 npm run test",
     "lint": "standard",
     "lint:fix": "standard --fix",
-    "precommit": "npm run test && lint-staged",
-    "prepush": "npm run test && lint-staged"
+    "precommit": "npm run test:all && lint-staged",
+    "prepush": "npm run test:all && lint-staged"
   },
   "lint-staged": {
     "*.js": [
@@ -57,6 +58,8 @@
     "mocha": "^3.3.0",
     "mysql": "^2.13.0",
     "pg": "^6.1.5",
+    "semver": "^5.3.0",
+    "shelljs": "^0.7.8",
     "sqlite3": "^3.1.8",
     "standard": "^10.0.2"
   },
