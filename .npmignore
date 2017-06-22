@@ -10,3 +10,4 @@ package-lock.json
 .env
 test/unit/storage
 .travis.yaml
+.coveralls.yml

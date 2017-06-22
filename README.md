@@ -1,6 +1,7 @@
 # Adonis Lucid Polymorphic (WORK IN PROGRESS)
 
 [![Build Status](https://travis-ci.org/enniel/adonis-lucid-polymorphic.svg?branch=master)](https://travis-ci.org/enniel/adonis-lucid-polymorphic)
+[![Coverage Status](https://coveralls.io/repos/github/enniel/adonis-lucid-polymorphic/badge.svg)](https://coveralls.io/github/enniel/adonis-lucid-polymorphic)
 
 Polymorphic Relations support for [Adonis Lucid](http://adonisjs.com/docs/3.2/lucid).
 
