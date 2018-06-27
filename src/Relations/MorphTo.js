@@ -6,8 +6,8 @@
  * MIT Licensed
  */
 
-const Relation = require('adonis-lucid/src/Lucid/Relations/Relation')
-const CE = require('adonis-lucid/src/Exceptions')
+const BaseRelation = require('@adonisjs/lucid/src/Lucid/Relations/BaseRelation')
+const CE = require('@adonisjs/lucid/src/Exceptions')
 const CatLog = require('cat-log')
 const logger = new CatLog('adonis:lucid')
 const _ = require('lodash')
@@ -28,7 +28,7 @@ function createMorphMap (morphMap) {
   return morphMap
 }
 
-class MorphTo extends Relation {
+class MorphTo extends BaseRelation {
   constructor (parent, determiner, morphMap, primaryKey) {
     super(parent, parent.constructor)
     this.toKey = primaryKey || this.parent.constructor.primaryKey
@@ -217,7 +217,7 @@ class MorphTo extends Relation {
    *
    * @public
    */
-  * save () {
+  async save () {
     throw CE.ModelRelationException.unSupportedMethod('save', this.constructor.name)
   }
 
@@ -227,7 +227,7 @@ class MorphTo extends Relation {
    *
    * @public
    */
-  * create () {
+  async create () {
     throw CE.ModelRelationException.unSupportedMethod('create', this.constructor.name)
   }
 
@@ -239,7 +239,7 @@ class MorphTo extends Relation {
    *
    * @throws CE.ModelRelationException
    */
-  * createMany () {
+  async createMany () {
     throw CE.ModelRelationException.unSupportedMethod('createMany', this.constructor.name)
   }
 
@@ -251,7 +251,7 @@ class MorphTo extends Relation {
    *
    * @throws CE.ModelRelationException
    */
-  * saveMany () {
+  async saveMany () {
     throw CE.ModelRelationException.unSupportedMethod('saveMany', this.constructor.name)
   }
 
@@ -267,7 +267,7 @@ class MorphTo extends Relation {
    * @public
    *
    */
-  * eagerLoad (values, scopeMethod) {
+  async eagerLoad (values, scopeMethod) {
     if (typeof (scopeMethod) === 'function') {
       scopeMethod(this.relatedQuery)
     }
@@ -275,7 +275,7 @@ class MorphTo extends Relation {
     _.each(this.morphMap, (model, typeKey) => {
       this.relatedQuery.orWhereIn(`${model.table}.${this.toKey}`, values)
     })
-    const results = yield this.relatedQuery.fetch()
+    const results = await this.relatedQuery.fetch()
     const self = this
     return results.keyBy((item) => {
       return item[this.toKey]
@@ -297,7 +297,7 @@ class MorphTo extends Relation {
    * @public
    *
    */
-  * eagerLoadSingle (value, scopeMethod) {
+  async eagerLoadSingle (value, scopeMethod) {
     if (typeof (scopeMethod) === 'function') {
       scopeMethod(this.relatedQuery)
     }
@@ -305,7 +305,7 @@ class MorphTo extends Relation {
     _.each(this.morphMap, (model, typeKey) => {
       this.relatedQuery.orWhere(`${model.table}.${this.toKey}`, value)
     })
-    const result = yield this.relatedQuery.first()
+    const result = await this.relatedQuery.first()
     const response = {}
     response[value] = this._transformer(result)
     return response
@@ -355,10 +355,10 @@ class MorphTo extends Relation {
    *
    * @public
    */
-  * first () {
+  async first () {
     this._validateRead()
     this._decorateRead()
-    const result = yield this.relatedQuery.first()
+    const result = await this.relatedQuery.first()
     return this._transformer(result)
   }
 }
