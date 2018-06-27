@@ -6,18 +6,19 @@
  * MIT Licensed
  */
 
-const Relation = require('adonis-lucid/src/Lucid/Relations/Relation')
-const CE = require('adonis-lucid/src/Exceptions')
+const BaseRelation = require('@adonisjs/lucid/src/Lucid/Relations/BaseRelation')
+const CE = require('@adonisjs/lucid/src/Exceptions')
 const CatLog = require('cat-log')
 const logger = new CatLog('adonis:lucid')
+const { ioc } = require('@adonisjs/fold')
 
-class MorphOneOrMany extends Relation {
+class MorphOneOrMany extends BaseRelation {
   constructor (parent, related, determiner, primaryKey) {
-    super(parent, related)
-    this.fromKey = primaryKey || this.parent.constructor.primaryKey
+    super(parent, ioc.use(related))
+    this.fromKey = primaryKey || parent.constructor.primaryKey
     this.toKey = determiner ? `${determiner}_id` : 'parent_id'
     this.typeKey = determiner ? `${determiner}_type` : 'parent_type'
-    this.typeValue = this.parent.constructor.morphKey || this.parent.table || this.parent.constructor.table
+    this.typeValue = parent.constructor.morphKey || parent.table || parent.constructor.table
   }
 
   /**
@@ -72,7 +73,7 @@ class MorphOneOrMany extends Relation {
    *
    * @public
    */
-  * save (relatedInstance) {
+  async save (relatedInstance) {
     if (relatedInstance instanceof this.related === false) {
       throw CE.ModelRelationException.relationMisMatch('save accepts an instance of related model')
     }
@@ -84,7 +85,7 @@ class MorphOneOrMany extends Relation {
     }
     relatedInstance[this.toKey] = this.parent[this.fromKey]
     relatedInstance[this.typeKey] = this.typeValue
-    return yield relatedInstance.save()
+    return relatedInstance.save()
   }
 }
 

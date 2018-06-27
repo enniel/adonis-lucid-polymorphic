@@ -7,7 +7,8 @@
  */
 
 const MorphOneOrMany = require('./MorphOneOrMany')
-const helpers = require('adonis-lucid/src/Lucid/QueryBuilder/helpers')
+const { ioc } = require('@adonisjs/fold')
+const helpers = ioc.use('Helpers')
 
 class MorphMany extends MorphOneOrMany {
   /**
@@ -21,11 +22,11 @@ class MorphMany extends MorphOneOrMany {
    * @public
    *
    */
-  * eagerLoad (values, scopeMethod) {
+  async eagerLoad (values, scopeMethod) {
     if (typeof (scopeMethod) === 'function') {
       scopeMethod(this.relatedQuery)
     }
-    const results = yield this.relatedQuery
+    const results = await this.relatedQuery
       .where(this.typeKey, this.typeValue)
       .whereIn(this.toKey, values)
       .fetch()
@@ -49,11 +50,11 @@ class MorphMany extends MorphOneOrMany {
    * @public
    *
    */
-  * eagerLoadSingle (value, scopeMethod) {
+  async eagerLoadSingle (value, scopeMethod) {
     if (typeof (scopeMethod) === 'function') {
       scopeMethod(this.relatedQuery)
     }
-    const results = yield this.relatedQuery
+    const results = await this.relatedQuery
       .where(this.typeKey, this.typeValue)
       .where(this.toKey, value)
       .fetch()

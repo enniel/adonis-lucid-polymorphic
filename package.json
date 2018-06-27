@@ -1,7 +1,7 @@
 {
   "name": "adonis-lucid-polymorphic",
-  "version": "0.0.1",
-  "description": "The Adonis Lucid Polymorphic Relations Support.",
+  "version": "0.1.0",
+  "description": "Adonis 4.x Lucid Polymorphic Relations Support.",
   "main": "src/Relations",
   "directories": {
     "test": "test"
@@ -46,8 +46,8 @@
   },
   "homepage": "https://github.com/enniel/adonis-lucid-polymorphic#readme",
   "devDependencies": {
-    "adonis-fold": "^3.0.3",
-    "adonis-lucid": "^3.0.16",
+    "@adonisjs/fold": "^4.0.8",
+    "@adonisjs/lucid": "^5.0.4",
     "bluebird": "^3.5.0",
     "chai": "^3.5.0",
     "co-fs-extra": "^1.2.1",

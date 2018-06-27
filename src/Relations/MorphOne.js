@@ -7,7 +7,7 @@
  */
 
 const MorphOneOrMany = require('./MorphOneOrMany')
-const CE = require('adonis-lucid/src/Exceptions')
+const CE = require('@adonisjs/lucid/src/Exceptions')
 
 class MorphOne extends MorphOneOrMany {
   /**
@@ -56,11 +56,11 @@ class MorphOne extends MorphOneOrMany {
    * @public
    *
    */
-  * eagerLoad (values, scopeMethod) {
+  async eagerLoad (values, scopeMethod) {
     if (typeof (scopeMethod) === 'function') {
       scopeMethod(this.relatedQuery)
     }
-    const results = yield this.relatedQuery
+    const results = await this.relatedQuery
       .where(this.typeKey, this.typeValue)
       .whereIn(this.toKey, values)
       .fetch()
@@ -81,11 +81,11 @@ class MorphOne extends MorphOneOrMany {
    * @public
    *
    */
-  * eagerLoadSingle (value, scopeMethod) {
+  async eagerLoadSingle (value, scopeMethod) {
     if (typeof (scopeMethod) === 'function') {
       scopeMethod(this.relatedQuery)
     }
-    const results = yield this.relatedQuery
+    const results = await this.relatedQuery
       .where(this.typeKey, this.typeValue)
       .where(this.toKey, value)
       .first()
@@ -102,7 +102,7 @@ class MorphOne extends MorphOneOrMany {
    *
    * @throws CE.ModelRelationException
    */
-  * createMany () {
+  async createMany () {
     throw CE.ModelRelationException.unSupportedMethod('createMany', this.constructor.name)
   }
 
@@ -114,7 +114,7 @@ class MorphOne extends MorphOneOrMany {
    *
    * @throws CE.ModelRelationException
    */
-  * saveMany () {
+  async saveMany () {
     throw CE.ModelRelationException.unSupportedMethod('saveMany', this.constructor.name)
   }
 }
