@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/enniel/adonis-lucid-polymorphic.svg?branch=master)](https://travis-ci.org/enniel/adonis-lucid-polymorphic)
 [![Coverage Status](https://coveralls.io/repos/github/enniel/adonis-lucid-polymorphic/badge.svg)](https://coveralls.io/github/enniel/adonis-lucid-polymorphic)
 
-Polymorphic Relations support for [Adonis Lucid](http://adonisjs.com/docs/3.2/lucid).
+Polymorphic Relations support for [Adonis 4.x Lucid](http://adonisjs.com/docs/4.1/lucid).
 
 ## Installation
 
