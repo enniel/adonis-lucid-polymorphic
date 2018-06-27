@@ -59,11 +59,11 @@ const Model = use('Lucid')
 
 class Post extends Model {
   static get traits () {
-    return ['Adonis/Lucid/MorphTrait']
+    return ['@provider:Morphable']
   }
 
   comments () {
-    return this.morphMany('App/Model/Comment', 'commentable')
+    return this.morphMany('App/Models/Comment', 'commentable', 'id')
   }
 }
 
@@ -78,11 +78,11 @@ const Model = use('Lucid')
 
 class Video extends Model {
   static get traits () {
-    return ['Adonis/Lucid/MorphTrait']
+    return ['@provider:Morphable']
   }
 
   comments () {
-    return this.morphMany('App/Model/Comment', 'commentable')
+    return this.morphMany('App/Models/Comment', 'commentable', 'id')
   }
 }
 
@@ -97,12 +97,12 @@ const Model = use('Lucid')
 
 class Comment extends Model {
   static get traits () {
-    return ['Adonis/Lucid/MorphTrait']
+    return ['@provider:Morphable']
   }
 
   commentable () {
     return this.morphTo('commentable', [
-      'App/Model/Post', 'App/Model/Video'
+      'App/Models/Post', 'App/Models/Video'
     ])
   }
 }
@@ -119,12 +119,12 @@ module.exports = Video
 
 class Comment extends Model {
   static get traits () {
-    return ['Adonis/Lucid/MorphTrait']
+    return ['@provider:Morphable']
   }
 
   commentable () {
     return this.morphTo('commentable', [
-      'App/Model/Post', 'App/Model/Video'
+      'App/Models/Post', 'App/Models/Video'
     ], 'id')
   }
 }
@@ -139,11 +139,11 @@ class Comment extends Model {
 
 class Post extends Model {
   static get traits () {
-    return ['Adonis/Lucid/MorphTrait']
+    return ['@provider:Morphable']
   }
 
   comments () {
-    return this.morphMany('App/Model/Comment', 'commentable', 'id')
+    return this.morphMany('App/Models/Comment', 'commentable', 'id')
   }
 }
 
@@ -157,11 +157,11 @@ class Post extends Model {
 
 class Publication extends Model {
   static get traits () {
-    return ['Adonis/Lucid/MorphTrait']
+    return ['@provider:Morphable']
   }
 
   content () {
-    return this.morphOne('App/Model/Content', 'contentable', 'id')
+    return this.morphOne('App/Models/Content', 'contentable', 'id')
   }
 }
 
