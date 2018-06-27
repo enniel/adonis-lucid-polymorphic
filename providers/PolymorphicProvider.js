@@ -6,14 +6,13 @@
  * MIT Licensed
  */
 
-const ServiceProvider = require('adonis-fold').ServiceProvider
+const { ServiceProvider } = require('@adonisjs/fold')
 
 class PolymorphicProvider extends ServiceProvider {
-  * register () {
-    this.app.bind('Adonis/Lucid/MorphTrait', function () {
-      const MorphTrait = require('../src/Traits/MorphTrait')
-      return new MorphTrait()
-    })
+  async register () {
+    const MorphTrait = require('../src/Traits/MorphTrait')
+    this.app.bind('Adonis/Traits/Morphable', () => new MorphTrait())
+    this.app.alias('Adonis/Traits/Morphable', 'Morphable')
   }
 }
 
