@@ -71,17 +71,17 @@ module.exports = {
     ]
     return bluebird.all(tables)
   },
-  createRecords: function * (knex, table, values) {
-    return yield knex.table(table).insert(values).returning('id')
+  createRecords: async function (knex, table, values) {
+    return knex.table(table).insert(values).returning('id')
   },
-  truncate: function * (knex, table) {
-    yield knex.table(table).truncate()
+  truncate: async function (knex, table) {
+    await knex.table(table).truncate()
   },
-  up: function * (knex) {
-    yield files.createDir()
-    yield this.setupTables(knex)
+  up: async function (knex) {
+    await files.createDir()
+    await this.setupTables(knex)
   },
-  down: function * (knex) {
-    yield this.dropTables(knex)
+  down: async function (knex) {
+    await this.dropTables(knex)
   }
 }

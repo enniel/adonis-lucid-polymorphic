@@ -10,7 +10,7 @@ const fs = require('co-fs-extra')
 const path = require('path')
 
 module.exports = {
-  createDir: function * () {
-    return yield fs.ensureDir(path.join(__dirname, '../storage'))
+  createDir: async function () {
+    return fs.ensureDir(path.join(__dirname, '../storage'))
   }
 }
