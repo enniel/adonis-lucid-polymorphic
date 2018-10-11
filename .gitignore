@@ -70,7 +70,7 @@ package-lock.json
 .env
 
 # sqlite storage
-test/unit/storage
-
+test/database
+test/tmp
 
 # End of https://www.gitignore.io/api/node

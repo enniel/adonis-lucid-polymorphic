@@ -1,365 +1,286 @@
 'use strict'
 
-/**
- * adonis-lucid-polymorphic
- * Copyright(c) 2017 Evgeny Razumov
- * MIT Licensed
- */
-
-const Relation = require('adonis-lucid/src/Lucid/Relations/Relation')
-const CE = require('adonis-lucid/src/Exceptions')
-const CatLog = require('cat-log')
-const logger = new CatLog('adonis:lucid')
+const BaseRelation = require('@adonisjs/lucid/src/Lucid/Relations/BaseRelation')
+const CE = require('@adonisjs/lucid/src/Exceptions')
+const util = require('@adonisjs/lucid/lib/util')
 const _ = require('lodash')
 
-function createMorphMap (morphMap) {
-  if (_.isArray(morphMap)) {
-    morphMap = _.reduce(morphMap, (result, model) => {
-      result[model.table] = model
-      return result
-    }, {})
-  }
-  if (_.isObject(morphMap)) {
-    morphMap = _.reduce(morphMap, (result, model, key) => {
-      result[key] = model
-      return result
-    }, {})
-  }
-  return morphMap
+const getRelatedModel = (relatedModels, morphType) => {
+  return relatedModels.find(RelatedModel => {
+    return RelatedModel.morphType === morphType || RelatedModel.table === morphType
+  })
 }
 
-class MorphTo extends Relation {
-  constructor (parent, determiner, morphMap, primaryKey) {
-    super(parent, parent.constructor)
-    this.toKey = primaryKey || this.parent.constructor.primaryKey
-    this.fromKey = determiner ? `${determiner}_id` : 'parent_id'
-    this.typeKey = determiner ? `${determiner}_type` : 'parent_type'
-    this.morphMap = createMorphMap(morphMap) || {}
-    this.morphPrefix = '_morph_'
+class MorphTo extends BaseRelation {
+  constructor (parentInstance, relatedModels, primaryKey, foreignKey, morphIdKey, morphTypeKey) {
+    const RelatedModel = getRelatedModel(relatedModels, parentInstance[morphTypeKey]) || relatedModels[0]
+    super(parentInstance, RelatedModel, primaryKey, foreignKey)
+
+    this.relatedModels = relatedModels
+    this.morphIdKey = morphIdKey
+    this.morphTypeKey = morphTypeKey
+
+    /**
+     * this is default value to eagerload data, but users
+     * can pass their custom function by calling
+     * `eagerLoadQuery` method and pass a
+     * closure to it.
+     *
+     * @method _eagerLoadFn
+     *
+     * @param  {Object} query
+     * @param  {String} fk
+     * @param  {Array} rows
+     * @param  {String} typeKey
+     * @param  {String} typeKeyValue
+     *
+     * @return {void}
+     */
+    this._eagerLoadFn = function (query, fk, values) {
+      query.whereIn(fk, values)
+    }
+
+    /**
+     * Storing relation meta-data on the
+     * query builder.
+     */
+    this.relatedQuery.$relation.morphIdKey = this.morphIdKey
+    this.relatedQuery.$relation.morphTypeKey = this.morphTypeKey
   }
 
   /**
-   * empty placeholder to be used when unable to eagerload
-   * relations. It needs to be an array of many to many
-   * relationships.
+   * Returns the value for the morph key set on
+   * the relationship
    *
-   * @method eagerLoadFallbackValue
+   * @attribute $morphIdKeyValue
    *
-   * @return {Null}
+   * @return {Mixed}
    */
-  get eagerLoadFallbackValue () {
-    return null
+  get $morphIdKeyValue () {
+    return this.parentInstance[this.morphIdKey]
   }
 
   /**
-   * returns result of this.first
+   * Decorates the query instance with the required where
+   * clause. This method should be called internally by
+   * all read/update methods.
    *
-   * @see this.first()
+   * @method _decorateQuery
+   *
+   * @return {void}
+   *
+   * @private
+   */
+  _decorateQuery () {
+    this.relatedQuery.where(this.foreignKey, this.$morphIdKeyValue)
+  }
+
+  /**
+   * Returns the first row for the related model
+   *
+   * @method first
+   *
+   * @return {Object|Null}
+   */
+  first () {
+    if (!this.parentInstance.$persisted) {
+      throw CE.RuntimeException.unSavedModel(this.parentInstance.constructor.name)
+    }
+
+    if (!util.existy(this.$primaryKeyValue)) {
+      return null
+    }
+
+    if (!util.existy(this.$morphIdKeyValue)) {
+      return null
+    }
+
+    this._decorateQuery()
+    return this.relatedQuery.first()
+  }
+
+  /**
+   * Map values from model instances to an array. It is required
+   * to make `whereIn` query when eagerloading results.
+   *
+   * @method mapValues
+   *
+   * @param  {Array}  modelInstances
+   *
+   * @return {Array}
+   */
+  mapValues (modelInstances) {
+    return _.transform(modelInstances, (result, modelInstance) => {
+      if (util.existy(modelInstance[this.morphIdKey])) {
+        result.push(modelInstance[this.morphIdKey])
+      }
+      return result
+    }, [])
+  }
+
+  /**
+   * Groups related instances with their foriegn keys
+   *
+   * @method group
+   *
+   * @param  {Array} relatedInstances
+   *
+   * @return {Object} @multiple([key=String, values=Array, defaultValue=Null])
+   */
+  group (relatedInstances) {
+    const transformedValues = _.transform(relatedInstances, (result, relatedInstance) => {
+      const foreignKeyValue = relatedInstance[this.foreignKey]
+      result.push({
+        identity: foreignKeyValue,
+        value: relatedInstance
+      })
+      return result
+    }, [])
+
+    return { key: this.morphIdKey, values: transformedValues, defaultValue: null }
+  }
+
+  /**
+   * Returns the eagerLoad query for the relationship
+   *
+   * @method eagerLoad
+   * @async
+   *
+   * @param  {Array}          rows
+   *
    * @return {Object}
+   */
+  async eagerLoad (rows) {
+    const mappedRows = this.mapValues(rows)
+    if (!mappedRows || !mappedRows.length) {
+      return this.group([])
+    }
+    this._eagerLoadFn(this.relatedQuery, this.foreignKey, mappedRows)
+    const relatedInstances = await this.relatedQuery.fetch()
+    return this.group(relatedInstances.rows)
+  }
+
+  /**
+   * Overriding fetch to call first, since belongsTo
+   * can never have many rows
    *
-   * @public
+   * @method fetch
+   * @async
+   *
+   * @return {Object}
    */
   fetch () {
     return this.first()
   }
 
   /**
-   * Get the morph key.
+   * Adds a where clause to limit the select search
+   * to related rows only.
    *
-   * @param  {Object}  instance
+   * @method relatedWhere
    *
-   * @return {String|null}
-   */
-  morphKey (instance) {
-    return _.findKey(this.morphMap, (model) => {
-      return instance instanceof model
-    })
-  }
-
-  /**
-   * Get the morph model.
-   *
-   * @param  {String}  key
-   *
-   * @return {Object|null}
-   */
-  morphModel (key) {
-    return _.get(this.morphMap, key)
-  }
-
-  /**
-   * Returns the query builder instance for related model.
+   * @param  {Boolean}     count
+   * @param  {Integer}     counter
    *
    * @return {Object}
    */
-  getRelatedQuery () {
-    this._makeJoinQuery()
-    return this.relatedQuery
+  relatedWhere (count, counter) {
+    /**
+     * When we are making self joins, we should alias the current
+     * table with the counter, which is sent by the consumer of
+     * this method.
+     *
+     * Also the counter should be incremented by the consumer itself.
+     */
+    if (this.$primaryTable === this.$foreignTable) {
+      this.relatedTableAlias = `sj_${counter}`
+      this.relatedQuery.table(`${this.$foreignTable} AS ${this.relatedTableAlias}`)
+    }
+
+    const tableAlias = this.relatedTableAlias || this.$foreignTable
+
+    const lhs = this.columnize(`${this.$primaryTable}.${this.morphIdKey}`)
+    const rhs = this.columnize(`${tableAlias}.${this.foreignKey}`)
+    this.relatedQuery.whereRaw(`${lhs} = ${rhs}`)
+
+    if (count) {
+      this.relatedQuery.count('*')
+    }
+
+    return this.relatedQuery.query
   }
 
-  /**
-   * decorates the current query chain before execution
-   */
-  _decorateRead () {
-    this._makeJoinQuery()
-    _.each(this.morphMap, (model, typeKey) => {
-      this.relatedQuery.orWhere(`${model.table}.${this.toKey}`, this.parent[this.fromKey])
+  /* istanbul ignore next */
+  create () {
+    throw CE.ModelRelationException.unSupportedMethod('create', 'morphTo')
+  }
+
+  /* istanbul ignore next */
+  save () {
+    throw CE.ModelRelationException.unSupportedMethod('save', 'morphTo')
+  }
+
+  /* istanbul ignore next */
+  createMany () {
+    throw CE.ModelRelationException.unSupportedMethod('createMany', 'morphTo')
+  }
+
+  /* istanbul ignore next */
+  saveMany () {
+    throw CE.ModelRelationException.unSupportedMethod('saveMany', 'morphTo')
+  }
+
+  _getMorphType (relatedInstance) {
+    const Model = this.relatedModels.find(RelatedModel => {
+      return relatedInstance instanceof RelatedModel
     })
+    return Model.morphType || Model.table
   }
 
   /**
-   * makes the join query to be used by other
-   * methods.
+   * Associate 2 models together, also this method will save
+   * the related model if not already persisted
    *
-   * @param {Boolean} ignoreSelect
-   *
-   * @public
-   */
-  _makeJoinQuery (ignoreSelect) {
-    const selectionKeys = [
-      `${this.related.table}.${this.toKey} as ${this.morphPrefix}${this.toKey}`,
-      `${this.related.table}.${this.typeKey} as ${this.morphPrefix}${this.typeKey}`,
-      `${this.related.table}.${this.fromKey} as ${this.morphPrefix}${this.fromKey}`
-    ]
-    const raw = this.relatedQuery.queryBuilder.raw
-    const self = this
-    _.each(this.morphMap, (model, key) => {
-      selectionKeys.push(`${model.table}.*`)
-      this.relatedQuery.innerJoin(`${model.table}`, function () {
-        this
-          .on(`${self.related.table}.${self.fromKey}`, `${model.table}.${self.toKey}`)
-          .on(`${self.related.table}.${self.typeKey}`, raw('?', [key]))
-      })
-    })
-    if (!ignoreSelect) {
-      this.relatedQuery.select.apply(this.relatedQuery, selectionKeys)
-    }
-  }
-
-  /**
-   * Returns the existence query to be used when main
-   * query is dependent upon childs.
-   *
-   * @param  {Function} [callback]
-   * @return {Object}
-   */
-  exists (callback) {
-    this._makeJoinQuery(true)
-    if (typeof (callback) === 'function') {
-      callback(this.relatedQuery)
-    }
-    return this.relatedQuery.modelQueryBuilder
-  }
-
-  /**
-   * Returns the existence query to be used when main
-   * query is dependent upon childs.
-   *
-   * @param  {Function} [callback]
-   * @return {Object}
-   */
-  counts (callback) {
-    this._makeJoinQuery(true)
-    if (typeof (callback) === 'function') {
-      callback(this.relatedQuery)
-    }
-    return this.relatedQuery.modelQueryBuilder
-  }
-
-  /**
-   * transform value
-   */
-  _transformer (value) {
-    if (value) {
-      const typeKey = value[`${this.morphPrefix}${this.typeKey}`]
-      const ModelClass = this.morphModel(typeKey)
-      const modelInstance = new ModelClass()
-      const attributes = _.omit(value.attributes, [
-        `${this.morphPrefix}${this.toKey}`,
-        `${this.morphPrefix}${this.typeKey}`,
-        `${this.morphPrefix}${this.fromKey}`
-      ])
-      modelInstance.attributes = attributes
-      modelInstance.exists = true
-      modelInstance.original = _.clone(modelInstance.attributes)
-      return modelInstance
-    }
-    return value
-  }
-
-  /**
-   * morphTo cannot have delete, since it
-   * maps one to one relationship
-   *
-   * @public
-   *
-   * @throws CE.ModelRelationException
-   */
-  delete () {
-    throw CE.ModelRelationException.unSupportedMethod('delete', this.constructor.name)
-  }
-
-  /**
-   * morphTo cannot have paginate, since it
-   * maps one to one relationship
-   *
-   * @public
-   *
-   * @throws CE.ModelRelationException
-   */
-  paginate () {
-    throw CE.ModelRelationException.unSupportedMethod('paginate', this.constructor.name)
-  }
-
-  /**
-   * overrides base save method to throw an error, as
-   * morphTo does not support save method
-   *
-   * @public
-   */
-  * save () {
-    throw CE.ModelRelationException.unSupportedMethod('save', this.constructor.name)
-  }
-
-  /**
-   * overrides base create method to throw an error, as
-   * morphTo does not support create method
-   *
-   * @public
-   */
-  * create () {
-    throw CE.ModelRelationException.unSupportedMethod('create', this.constructor.name)
-  }
-
-  /**
-   * morphTo cannot have createMany, since it
-   * maps one to one relationship
-   *
-   * @public
-   *
-   * @throws CE.ModelRelationException
-   */
-  * createMany () {
-    throw CE.ModelRelationException.unSupportedMethod('createMany', this.constructor.name)
-  }
-
-  /**
-   * morphTo cannot have saveMany, since it
-   * maps one to one relationship
-   *
-   * @public
-   *
-   * @throws CE.ModelRelationException
-   */
-  * saveMany () {
-    throw CE.ModelRelationException.unSupportedMethod('saveMany', this.constructor.name)
-  }
-
-  /**
-   * will eager load the relation for multiple values on related
-   * model and returns an object with values grouped by foreign
-   * key.
-   *
-   * @param {Array} values
-   * @param {Function} [scopeMethod]
-   * @return {Object}
-   *
-   * @public
-   *
-   */
-  * eagerLoad (values, scopeMethod) {
-    if (typeof (scopeMethod) === 'function') {
-      scopeMethod(this.relatedQuery)
-    }
-    this._makeJoinQuery()
-    _.each(this.morphMap, (model, typeKey) => {
-      this.relatedQuery.orWhereIn(`${model.table}.${this.toKey}`, values)
-    })
-    const results = yield this.relatedQuery.fetch()
-    const self = this
-    return results.keyBy((item) => {
-      return item[this.toKey]
-    }).mapValues((value) => {
-      return self._transformer(value)
-    }).value()
-  }
-
-  /**
-   * will eager load the relation for multiple values on related
-   * model and returns an object with values grouped by foreign
-   * key. It is equivalent to eagerLoad but query defination
-   * is little different.
-   *
-   * @param  {Mixed} value
-   * @param {Function} [scopeMethod] [description]
-   * @return {Object}
-   *
-   * @public
-   *
-   */
-  * eagerLoadSingle (value, scopeMethod) {
-    if (typeof (scopeMethod) === 'function') {
-      scopeMethod(this.relatedQuery)
-    }
-    this._makeJoinQuery()
-    _.each(this.morphMap, (model, typeKey) => {
-      this.relatedQuery.orWhere(`${model.table}.${this.toKey}`, value)
-    })
-    const result = yield this.relatedQuery.first()
-    const response = {}
-    response[value] = this._transformer(result)
-    return response
-  }
-
-  /**
-   * associates a related model to the parent model by setting
-   * up foreignKey value
+   * @method associate
+   * @async
    *
    * @param  {Object}  relatedInstance
+   * @param  {Object}  [trx]
    *
-   * @public
+   * @return {Promise}
    */
-  associate (relatedInstance) {
-    if (!this.morphKey(relatedInstance)) {
-      const morphModels = _.reduce(this.morphMap, (result, value) => {
-        result.push(value.name)
-        return result
-      }, [])
-      throw CE.ModelRelationException.relationMisMatch(`associate accepts an instance one of: ${_.join(morphModels, ', ')}`)
+  async associate (relatedInstance, trx) {
+    const morphType = this._getMorphType(relatedInstance)
+    if (!morphType) {
+      throw CE.ModelRelationException.relationMisMatch(`Method associate accepts only an instance one of: ${this.relatedModels}`)
     }
-    if (relatedInstance.isNew()) {
-      throw CE.ModelRelationException.unSavedTarget('associate', this.parent.constructor.name, relatedInstance.constructor.name)
+    if (relatedInstance.isNew) {
+      await relatedInstance.save(trx)
     }
-    if (!relatedInstance[this.toKey]) {
-      logger.warn(`Trying to associate relationship with ${this.toKey} as foriegnKey, whose value is falsy`)
-    }
-    this.parent[this.fromKey] = relatedInstance[this.toKey]
-    this.parent[this.typeKey] = this.morphKey(relatedInstance)
+
+    this.parentInstance[this.morphIdKey] = relatedInstance[this.primaryKey]
+    this.parentInstance[this.morphTypeKey] = morphType
+    return this.parentInstance.save(trx)
   }
 
   /**
-   * dissociate a related model from the parent model by setting
-   * foreignKey to null
+   * Dissociate relationship from database by setting `foriegnKey` and `typeKey` to null
    *
-   * @public
+   * @method dissociate
+   * @async
+   *
+   * @param  {Object}  [trx]
+   *
+   * @return {Promise}
    */
-  dissociate () {
-    this.parent[this.fromKey] = null
-    this.parent[this.typeKey] = null
-  }
+  async dissociate (trx) {
+    if (this.parentInstance.isNew) {
+      throw CE.ModelRelationException.unsavedModelInstance('Cannot dissociate relationship since model instance is not persisted')
+    }
 
-  /**
-   * returns the first match item for related model
-   *
-   * @return {Object}
-   *
-   * @public
-   */
-  * first () {
-    this._validateRead()
-    this._decorateRead()
-    const result = yield this.relatedQuery.first()
-    return this._transformer(result)
+    this.parentInstance[this.morphIdKey] = null
+    this.parentInstance[this.morphTypeKey] = null
+    return this.parentInstance.save(trx)
   }
 }
 

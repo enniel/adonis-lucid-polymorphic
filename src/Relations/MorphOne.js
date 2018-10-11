@@ -1,121 +1,90 @@
 'use strict'
 
-/**
- * adonis-lucid-polymorphic
- * Copyright(c) 2017 Evgeny Razumov
- * MIT Licensed
- */
-
+const CE = require('@adonisjs/lucid/src/Exceptions')
+const _ = require('lodash')
 const MorphOneOrMany = require('./MorphOneOrMany')
-const CE = require('adonis-lucid/src/Exceptions')
 
 class MorphOne extends MorphOneOrMany {
   /**
-   * empty placeholder to be used when unable to eagerload
-   * relations.
+   * Takes an array of related instances and returns an array
+   * for each parent record.
    *
-   * @method eagerLoadFallbackValue
+   * @method group
    *
-   * @return {Null}
+   * @param  {Array} relatedInstances
+   *
+   * @return {Object} @multiple([key=String, values=Array, defaultValue=Null])
    */
-  get eagerLoadFallbackValue () {
-    return null
+  group (relatedInstances) {
+    const transformedValues = _.transform(relatedInstances, (result, relatedInstance) => {
+      const foreignKeyValue = relatedInstance[this.foreignKey]
+      const existingRelation = _.find(result, (row) => row.identity === foreignKeyValue)
+
+      /**
+       * If there is already an existing instance for same parent
+       * record. We should override the value and do WARN the
+       * user since hasOne should never have multiple
+       * related instance.
+       */
+      if (existingRelation) {
+        existingRelation.value = relatedInstance
+        return result
+      }
+
+      result.push({
+        identity: foreignKeyValue,
+        value: relatedInstance
+      })
+      return result
+    }, [])
+    return { key: this.primaryKey, values: transformedValues, defaultValue: null }
   }
 
   /**
-   * returns result of this.first
+   * Fetch related rows for a relationship
    *
-   * @see this.first()
-   * @return {Object}
+   * @method fetch
    *
-   * @public
+   * @alias first
+   *
+   * @return {Model}
    */
   fetch () {
     return this.first()
   }
 
   /**
-   * morphOne cannot have paginate
+   * Adds a where clause to limit the select search
+   * to related rows only.
    *
-   * @public
+   * @method relatedWhere
    *
-   * @throws CE.ModelRelationException
-   */
-  paginate () {
-    throw CE.ModelRelationException.unSupportedMethod('paginate', this.constructor.name)
-  }
-
-  /**
-   * will eager load the relation for multiple values on related
-   * model and returns an object with values grouped by foreign
-   * key.
+   * @param  {Boolean}     count
    *
-   * @param {Array} values
    * @return {Object}
-   *
-   * @public
-   *
    */
-  * eagerLoad (values, scopeMethod) {
-    if (typeof (scopeMethod) === 'function') {
-      scopeMethod(this.relatedQuery)
+  relatedWhere (count) {
+    const lhs = this.columnize(`${this.$primaryTable}.${this.primaryKey}`)
+    const rhs = this.columnize(`${this.$foreignTable}.${this.foreignKey}`)
+    this.relatedQuery
+      .whereRaw(`${lhs} = ${rhs}`)
+      .where(`${this.$foreignTable}.${this.morphTypeKey}`, this.$morphTypeKeyValue)
+
+    if (count) {
+      this.relatedQuery.count('*')
     }
-    const results = yield this.relatedQuery
-      .where(this.typeKey, this.typeValue)
-      .whereIn(this.toKey, values)
-      .fetch()
-    return results.keyBy((item) => {
-      return item[this.toKey]
-    }).value()
+
+    return this.relatedQuery.query
   }
 
-  /**
-   * will eager load the relation for multiple values on related
-   * model and returns an object with values grouped by foreign
-   * key. It is equivalent to eagerLoad but query defination
-   * is little different.
-   *
-   * @param  {Mixed} value
-   * @return {Object}
-   *
-   * @public
-   *
-   */
-  * eagerLoadSingle (value, scopeMethod) {
-    if (typeof (scopeMethod) === 'function') {
-      scopeMethod(this.relatedQuery)
-    }
-    const results = yield this.relatedQuery
-      .where(this.typeKey, this.typeValue)
-      .where(this.toKey, value)
-      .first()
-    const response = {}
-    response[value] = results
-    return response
+  /* istanbul ignore next */
+  createMany () {
+    throw CE.ModelRelationException.unSupportedMethod('createMany', 'morphOne')
   }
 
-  /**
-   * morphOne cannot have createMany, since it
-   * maps one to one relationship
-   *
-   * @public
-   *
-   * @throws CE.ModelRelationException
-   */
-  * createMany () {
-    throw CE.ModelRelationException.unSupportedMethod('createMany', this.constructor.name)
-  }
-
-  /**
-   * morphOne cannot have saveMany, since it
-   * maps one to one relationship
-   *
-   * @public
-   *
-   * @throws CE.ModelRelationException
-   */
-  * saveMany () {
-    throw CE.ModelRelationException.unSupportedMethod('saveMany', this.constructor.name)
+  /* istanbul ignore next */
+  saveMany () {
+    throw CE.ModelRelationException.unSupportedMethod('saveMany', 'morphOne')
   }
 }
 

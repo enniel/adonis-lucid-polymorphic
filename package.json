@@ -1,22 +1,24 @@
 {
   "name": "adonis-lucid-polymorphic",
-  "version": "0.0.1",
-  "description": "The Adonis Lucid Polymorphic Relations Support.",
+  "version": "1.0.0",
+  "description": "Adonis Lucid ^4.1.0 Polymorphic Relations Support.",
   "main": "src/Relations",
-  "directories": {
-    "test": "test"
-  },
+  "files": [
+    "providers",
+    "src"
+  ],
   "scripts": {
-    "coverage": "npm run lint && FORCE_COLOR=true node ./bin/coverage",
-    "test": "npm run lint && FORCE_COLOR=true node ./bin/test",
-    "test:all": "npm run test:pg && npm run test:mysql && npm run test:sqlite3",
-    "test:pg": "DB=pg npm run test",
-    "test:mysql": "DB=mysql npm run test",
-    "test:sqlite3": "DB=sqlite3 npm run test",
+    "pretest": "npm run test:cleanup && npm run lint",
+    "posttest": "npm run test:cleanup && npm run coverage",
+    "test:cleanup": "rm -rf test/database && rm -rf test/tmp",
+    "test:sqlite": "DB=sqlite node japaFile.js",
+    "test:win": "node japaFile.js",
+    "test:mysql": "DB=mysql node japaFile.js",
+    "test:pg": "DB=pg node japaFile.js",
+    "test": "nyc npm run test:sqlite",
     "lint": "standard",
     "lint:fix": "standard --fix",
-    "precommit": "npm run test:all && lint-staged",
-    "prepush": "npm run test:all && lint-staged"
+    "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "lint-staged": {
     "*.js": [
@@ -27,8 +29,7 @@
   "author": "Evgeny Razumov (enniel)",
   "license": "MIT",
   "dependencies": {
-    "cat-log": "^1.0.2",
-    "lodash": "^4.17.4"
+    "lodash": "^4.17.11"
   },
   "repository": {
     "type": "git",
@@ -46,33 +47,39 @@
   },
   "homepage": "https://github.com/enniel/adonis-lucid-polymorphic#readme",
   "devDependencies": {
-    "adonis-fold": "^3.0.3",
-    "adonis-lucid": "^3.0.16",
-    "bluebird": "^3.5.0",
-    "chai": "^3.5.0",
-    "co-fs-extra": "^1.2.1",
-    "co-mocha": "^1.2.0",
-    "dirty-chai": "^1.2.2",
-    "dotenv": "^4.0.0",
-    "husky": "^0.13.4",
-    "istanbul": "^0.4.5",
-    "lint-staged": "^3.6.1",
-    "mocha": "^3.3.0",
-    "mocha-lcov-reporter": "^1.3.0",
-    "mysql": "^2.13.0",
-    "pg": "^6.1.5",
-    "semver": "^5.3.0",
-    "shelljs": "^0.7.8",
-    "sqlite3": "^3.1.8",
-    "standard": "^10.0.2"
+    "@adonisjs/fold": "^4.0.9",
+    "@adonisjs/lucid": "^4.1.0",
+    "@adonisjs/sink": "^1.0.17",
+    "child_process": "^1.0.2",
+    "coveralls": "^3.0.2",
+    "dotenv": "^6.1.0",
+    "fs-extra": "^7.0.0",
+    "husky": "^1.1.2",
+    "japa": "^2.0.4",
+    "japa-cli": "^1.0.1",
+    "lint-staged": "^7.3.0",
+    "mysql": "^2.16.0",
+    "nyc": "^13.0.1",
+    "pg": "^7.5.0",
+    "semver": "^5.6.0",
+    "sqlite3": "^4.0.2",
+    "standard": "^12.0.1"
   },
   "standard": {
     "global": [
-      "describe",
-      "it",
-      "after",
-      "before",
-      "context"
+      "use"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run test && lint-staged",
+      "pre-push": "npm run test && lint-staged"
+    }
+  },
+  "nyc": {
+    "include": [
+      "src",
+      "providers"
     ]
   }
 }
