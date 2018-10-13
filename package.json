@@ -18,7 +18,8 @@
     "test": "nyc npm run test:sqlite",
     "lint": "standard",
     "lint:fix": "standard --fix",
-    "coverage": "nyc report --reporter=text-lcov | coveralls"
+    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "postversion": "git push --set-upstream origin master && git push --follow-tags"
   },
   "lint-staged": {
     "*.js": [
