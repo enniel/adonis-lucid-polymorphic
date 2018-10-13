@@ -3,9 +3,11 @@
 const { ServiceProvider } = require('@adonisjs/fold')
 
 class PolymorphicProvider extends ServiceProvider {
-  async register () {
-    const Morphable = require('../src/Traits/Morphable')
-    this.app.bind('Adonis/Traits/Morphable', () => new Morphable())
+  register () {
+    this.app.bind('Adonis/Traits/Morphable', () => {
+      const Morphable = require('../src/Traits/Morphable')
+      return new Morphable()
+    })
     this.app.alias('Adonis/Traits/Morphable', 'Morphable')
   }
 }
