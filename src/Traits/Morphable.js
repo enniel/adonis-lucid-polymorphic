@@ -5,7 +5,7 @@ const { ioc } = require('@adonisjs/lucid/lib/iocResolver')
 const Relations = require('../Relations')
 const QueryBuilder = require('../QueryBuilder')
 
-class Morpthable {
+class Morphable {
   register (Model) {
     /**
      * Get fresh instance of query builder for
@@ -129,4 +129,4 @@ class Morpthable {
   }
 }
 
-module.exports = Morpthable
+module.exports = Morphable
