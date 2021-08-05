@@ -1,3 +1,8 @@
+## !!! Maintainer Needed !!!
+
+I currently don't have the resources to maintain this project. If someone is willing to put in the time to do it, I'm willing to assign the necessary privileges to that person. If you're willing to do this, reply on [issue](https://github.com/enniel/adonis-lucid-polymorphic/issues/13) or send me [email](mailto:razumov.evgeni@gmail.com).
+
+
 # Adonis Lucid Polymorphic
 
 [![Build Status](https://travis-ci.org/enniel/adonis-lucid-polymorphic.svg?branch=master)](https://travis-ci.org/enniel/adonis-lucid-polymorphic)
