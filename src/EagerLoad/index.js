@@ -23,7 +23,7 @@ class EagerLoad extends BaseEagerLoad {
         this._applyRuntimeConstraints(relationInstance, attributes.callback)
         this._chainNested(relationInstance, attributes.nested)
         const RelatedModel = relationInstance.RelatedModel
-        const groupName = RelatedModel.name
+        const groupName = RelatedModel.name ? RelatedModel.name : ""
         if (!result[groupName]) {
           result[groupName] = {
             relation,
